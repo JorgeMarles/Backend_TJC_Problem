@@ -7,8 +7,14 @@ export class Problem {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @Column("varchar", { length: 100})
+    name: string;
+
     @Column("varchar", { length: 800 })
-    enunciado: string;
+    statement: string;
+
+    @Column("varchar", { length: 20 })
+    difficulty : string;
 
     @Column("varchar", { length: 100 })
     example_input: string;

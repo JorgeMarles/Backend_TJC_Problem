@@ -4,7 +4,8 @@ import { PORT, URL_FRONTEND} from './config';
 import { AppDataSource } from './database';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-// import { userRouter } from './routers/UserRouter';
+import { topicRouter } from './routers/TopicRouter';
+import { problemRouter } from './routers/ProblemRouter';
 
 const app = express();
 
@@ -19,7 +20,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// app.use("/user", userRouter);
+app.use("/topic", topicRouter);
+app.use("/problem", problemRouter);
 
 const run = async () => {
     try {
