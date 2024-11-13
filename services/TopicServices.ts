@@ -21,8 +21,12 @@ export const createTopic = async (req: Request, res: Response) => {
 
 export const eraseTopic = async (req: Request, res: Response) => {
     try {        
-        const id: number = req.body;
-        const topic: unknown = await TopicRepository.findOneBy({ id: id });
+        const id: number = req.body.id;
+        const topic: unknown = await TopicRepository.findOne({
+            where: {
+                id: id
+            }
+        });
         if (topic instanceof Topic) {
             TopicRepository.delete(id);
             return res.status(200).send({ isErased: true, message: "Topic erased succesfully" });

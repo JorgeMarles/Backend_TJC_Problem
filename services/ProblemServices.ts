@@ -67,27 +67,19 @@ export const eraseProblem = async (req: Request, res: Response) => {
 
 export const findProblems = async (req: Request, res: Response) => {
     try {        
-        const problems: Problem[] = await ProblemRepository.find({relations: {
-            topic: true
-        }}); 
-        return res.status(200).send({ problems: problems });
-    }
-    catch (error: unknown) {
-        if (error instanceof Error) {
-            return res.status(400).send({ message: error.message });
-        }
-        else {
-            return res.status(400).send({ message: "Something went wrong"});
-        }
-    }
-};
-
-export const filterProblems = async (req: Request, res: Response) => {
-    try {
-        const filterParams = req.body;
-        const problems: Problem[] = await ProblemRepository.find({ 
-            where: filterParams
-        });
+        const difficulty = "difficulty" in req.params ? req.params["difficulty"] : undefined;
+        const topicName = "topic_name" in req.params ? req.params["topic_name"] : undefined;
+        const problems: Problem[] = await ProblemRepository.find({
+            relations: {
+                topic: true
+            },
+            where: {
+                difficulty: difficulty,
+                topic: {
+                    name: topicName
+                }
+            }
+        }); 
         return res.status(200).send({ problems: problems });
     }
     catch (error: unknown) {
