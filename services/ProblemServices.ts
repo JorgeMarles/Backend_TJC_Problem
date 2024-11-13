@@ -67,8 +67,8 @@ export const eraseProblem = async (req: Request, res: Response) => {
 
 export const findProblems = async (req: Request, res: Response) => {
     try {        
-        const difficulty = "difficulty" in req.params ? req.params["difficulty"] : undefined;
-        const topicName = "topic_name" in req.params ? req.params["topic_name"] : undefined;
+        const difficulty = "difficulty" in req.query && typeof req.query["difficulty"] === "string" ? req.query["difficulty"] : undefined;
+        const topicName = "topic_name" in req.query && typeof req.query["topic_name"] === "string" ? req.query["topic_name"] : undefined;
         const problems: Problem[] = await ProblemRepository.find({
             relations: {
                 topic: true
