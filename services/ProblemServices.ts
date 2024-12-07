@@ -19,10 +19,10 @@ import { Topic } from "../database/entity/Topic";
  */
 
 export const createProblem = async (req: Request, res: Response) => {
-    try {        
-        const problem : Problem = req.body;
-        const topicId : number = req.body.topic_id;
-        const topic : unknown = await TopicRepository.findOneBy({id: topicId});
+    try {
+        const problem: Problem = req.body;
+        const topicId: number = req.body.topic_id;
+        const topic: unknown = await TopicRepository.findOneBy({ id: topicId });
         if (topic instanceof Topic) {
             problem.disable = false;
             problem.topic = topic;
@@ -30,7 +30,7 @@ export const createProblem = async (req: Request, res: Response) => {
             return res.status(201).send({ isCreated: true, message: "Problem created succesfully" });
         }
         else {
-            return res.status(400).send({ isCreated: false, message: "The topic don't exist"});
+            return res.status(400).send({ isCreated: false, message: "The topic don't exist" });
         }
     }
     catch (error: unknown) {
@@ -39,13 +39,13 @@ export const createProblem = async (req: Request, res: Response) => {
             return res.status(400).send({ isCreated: false, message: error.message });
         }
         else {
-            return res.status(400).send({ isCreated: false, message: "Something went wrong"});
+            return res.status(400).send({ isCreated: false, message: "Something went wrong" });
         }
     }
 };
 
 export const eraseProblem = async (req: Request, res: Response) => {
-    try {        
+    try {
         const id: number = req.body;
         const problem: unknown = await ProblemRepository.findOneBy({ id: id });
         if (problem instanceof Problem) {
@@ -60,13 +60,13 @@ export const eraseProblem = async (req: Request, res: Response) => {
             return res.status(400).send({ isErased: false, message: error.message });
         }
         else {
-            return res.status(400).send({ isErased: false, message: "Something went wrong"});
+            return res.status(400).send({ isErased: false, message: "Something went wrong" });
         }
     }
 };
 
 export const findProblems = async (req: Request, res: Response) => {
-    try {        
+    try {
         const difficulty = "difficulty" in req.query && typeof req.query["difficulty"] === "string" ? req.query["difficulty"] : undefined;
         const topicName = "topic_name" in req.query && typeof req.query["topic_name"] === "string" ? req.query["topic_name"] : undefined;
         const problems: Problem[] = await ProblemRepository.find({
@@ -79,7 +79,7 @@ export const findProblems = async (req: Request, res: Response) => {
                     name: topicName
                 }
             }
-        }); 
+        });
         return res.status(200).send({ problems: problems });
     }
     catch (error: unknown) {
@@ -87,7 +87,33 @@ export const findProblems = async (req: Request, res: Response) => {
             return res.status(400).send({ message: error.message });
         }
         else {
-            return res.status(400).send({ message: "Something went wrong"});
+            return res.status(400).send({ message: "Something went wrong" });
+        }
+    }
+};
+
+
+export const findProblem = async (req: Request, res: Response) => {
+    try {
+        const id = "id" in req.query && typeof req.query["id"] === "string" ? req.query["id"] : undefined;
+        if (id !== undefined) {
+            const problem: unknown = await ProblemRepository.findOne({
+                where: { id: parseInt(id) },
+                relations: { topic: true }
+            });
+            if (problem instanceof Problem) {
+                return res.status(200).send({ problem: problem });
+            }
+            else throw Error("The problem doesn't exist.");
+        }
+        else throw Error("Invalid data");
+    }
+    catch (error: unknown) {
+        if (error instanceof Error) {
+            return res.status(400).send({ message: error.message });
+        }
+        else {
+            return res.status(400).send({ message: "Something went wrong" });
         }
     }
 };

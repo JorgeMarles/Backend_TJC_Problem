@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createProblem, eraseProblem, findProblems} from "../services/ProblemServices";
+import { createProblem, eraseProblem, findProblems, findProblem} from "../services/ProblemServices";
 
 export const create = async (req: Request, res: Response) => {
     try {
@@ -25,7 +25,12 @@ export const erase = async (req: Request, res: Response) => {
 
 export const find = async (req: Request, res: Response) => {
     try {
-        findProblems(req, res);
+        if(req.query["id"] !== undefined) {
+            findProblem(req, res);
+        }
+        else {
+            findProblems(req, res);
+        }
     } catch (error) {
         console.error(error);
         if (error instanceof Error) {
