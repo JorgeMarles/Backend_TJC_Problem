@@ -12,6 +12,12 @@ export class Problem {
 
     @Column("varchar", { length: 800 })
     statement: string;
+    
+    @Column("varchar", { length: 800 })
+    input: string;
+    
+    @Column("varchar", { length: 800 })
+    output: string;
 
     @Column("varchar", { length: 20 })
     difficulty : string;
