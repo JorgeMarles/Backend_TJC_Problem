@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express"
 import jwt from "jsonwebtoken";
 import fs from 'fs';
+import { URL_PUBLIC_KEY } from "../config";
 
-const PUBLIC_KEY = fs.readFileSync("../public.key", "utf8");
+const PUBLIC_KEY = fs.readFileSync(URL_PUBLIC_KEY, "utf8");
 
 interface TokenPayload {
     email: string;
