@@ -117,3 +117,48 @@ export const findProblem = async (req: Request, res: Response) => {
         }
     }
 };
+
+const removeUndefined = <T extends Problem>(data: T, dataUpdate: T) => {
+    for (let key in data) {
+        if (dataUpdate[key] == undefined) {
+            dataUpdate[key] = data[key];
+        }
+    }
+};
+
+interface ProblemUpdate extends Problem {
+    topic_id?: number;
+}
+
+export const updateProblem = async (req: Request, res: Response) => {
+    try {
+        const problemUpdate: ProblemUpdate = req.body;
+        const topicId: number = req.body.topic_id;
+        const problem: unknown = await ProblemRepository.findOne({
+            where: { id: problemUpdate.id },
+            relations: { topic: true }
+        });
+        if (!(problem instanceof Problem))
+            throw new Error("The problem doesn't exist");
+
+        const topic = await TopicRepository.findOneBy({ id: topicId });
+        if (!(topic instanceof Topic))
+            throw new Error("The specified topic does not exist");
+
+        problemUpdate.topic = topic;
+
+        removeUndefined(problem, problemUpdate);
+        delete problemUpdate.topic_id;
+        ProblemRepository.update(problem.id, problemUpdate);
+        return res.status(200).send({ isUpdate: true, user: problemUpdate, message: "Problem updated succesfully" }); 
+    }
+    catch (error: unknown) {
+        console.log(error);
+        if (error instanceof Error) {
+            return res.status(400).send({ isUpdate: false, message: error.message });
+        }
+        else {
+            return res.status(400).send({ isUpdate: false, message: "Something went wrong" });
+        }
+    }
+};

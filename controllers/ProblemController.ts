@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createProblem, eraseProblem, findProblems, findProblem} from "../services/ProblemServices";
+import { createProblem, eraseProblem, findProblems, findProblem, updateProblem} from "../services/ProblemServices";
 
 export const create = async (req: Request, res: Response) => {
     try {
@@ -32,6 +32,18 @@ export const find = async (req: Request, res: Response) => {
             findProblems(req, res);
         }
     } catch (error) {
+        console.error(error);
+        if (error instanceof Error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    }
+};
+
+export const update = async (req: Request, res : Response) => {
+    try {
+        updateProblem(req, res);
+    }
+    catch (error) {
         console.error(error);
         if (error instanceof Error) {
             res.status(400).json({ success: false, message: error.message });
