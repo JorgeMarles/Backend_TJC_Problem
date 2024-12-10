@@ -28,15 +28,6 @@ export class Problem {
     @Column("varchar", { length: 100 })
     example_output: string;
 
-    @Column("varchar", { length: 200 })
-    url_input: string;
-
-    @Column("varchar", { length: 200 })
-    url_output: string;
-
-    @Column("varchar", { length: 200 })
-    url_solution: string;
-
     @Column("boolean")
     disable: boolean;
 
