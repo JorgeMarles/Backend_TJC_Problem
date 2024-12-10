@@ -3,3 +3,6 @@ node_modules
 .env
 
 public.key
+uploads
+testCases
+tmp

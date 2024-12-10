@@ -167,16 +167,15 @@ export const saveTestCases = async (problem_id: number, inputsFile: Express.Mult
         const inputBuffer = fs.readFileSync(inputsFile.path);
         const inputBlob = new Blob([inputBuffer], { type: inputsFile.mimetype });
         const inputFile = new File([inputBlob], inputsFile.originalname, { type: inputsFile.mimetype });
-        formData.append('file', inputFile, inputsFile.originalname);
+        formData.append("inputs", inputFile);
 
         const outputBuffer = fs.readFileSync(outputsFile.path);
         const outputBlob = new Blob([outputBuffer], { type: outputsFile.mimetype });
         const outputFile = new File([outputBlob], outputsFile.originalname, { type: outputsFile.mimetype });
-        formData.append('file', outputFile, outputsFile.originalname);
+        formData.append("outputs", outputFile);
 
         formData.append("problem_id", problem_id.toString());
         const response = await axios.post(`${URL_RUNNER}/testCases/uploadTests`, formData);
-
         if (response.status !== 200) {
             throw new Error(response.data.message);
         }
@@ -184,17 +183,21 @@ export const saveTestCases = async (problem_id: number, inputsFile: Express.Mult
         fs.mkdirSync(path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`), { recursive: true });	
         fs.copyFileSync(inputsFile.path, path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`, `inputs.zip`));
         fs.copyFileSync(outputsFile.path, path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`, `outputs.zip`));
-        fs.rmSync(inputsFile.path);
-        fs.rmSync(outputsFile.path);
         
         return res.status(200).json({ message: "Test cases processed successfully", problem_id });
     }
     catch (error: unknown) {
+        ProblemRepository.delete(problem_id);
         if (error instanceof Error) {
+            console.log(error.message)
             return res.status(500).json({ message: "Error processing the test cases", error: error.message });
         }
         else {
             return res.status(400).send({ isUploaded: false, message: "Something went wrong" });
         }
+    }
+    finally {
+        fs.rmSync(inputsFile.path);
+        fs.rmSync(outputsFile.path);
     }
 }
