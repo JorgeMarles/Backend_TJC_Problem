@@ -49,7 +49,8 @@ export const eraseProblem = async (req: Request, res: Response) => {
         const id: number = req.body;
         const problem: unknown = await ProblemRepository.findOneBy({ id: id });
         if (problem instanceof Problem) {
-            ProblemRepository.delete(id);
+            ProblemRepository.update(id, { disable: true });
+            // ProblemRepository.delete(id);
             return res.status(200).send({ isErased: true, message: "Problem erased succesfully" });
         }
         else throw Error("The problem don't exists");
@@ -75,6 +76,7 @@ export const findProblems = async (req: Request, res: Response) => {
             },
             where: {
                 difficulty: difficulty,
+                disable: false,
                 topic: {
                     name: topicName
                 }
@@ -98,7 +100,7 @@ export const findProblem = async (req: Request, res: Response) => {
         const id = "id" in req.query && typeof req.query["id"] === "string" ? req.query["id"] : undefined;
         if (id !== undefined) {
             const problem: unknown = await ProblemRepository.findOne({
-                where: { id: parseInt(id) },
+                where: { id: parseInt(id), disable: false },
                 relations: { topic: true }
             });
             if (problem instanceof Problem) {
