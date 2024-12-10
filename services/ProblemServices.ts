@@ -18,8 +18,8 @@ export const createProblem = async (req: Request, res: Response) => {
         if (topic instanceof Topic) {
             problem.disable = false;
             problem.topic = topic;
-            await ProblemRepository.save(problem);
-            return res.status(201).send({ isCreated: true, message: "Problem created succesfully" });
+            const result:Problem = await ProblemRepository.save(problem);
+            return res.status(201).send({ isCreated: true, problem_id: result.id, message: "Problem created succesfully" });
         }
         else {
             return res.status(400).send({ isCreated: false, message: "The topic don't exist" });
