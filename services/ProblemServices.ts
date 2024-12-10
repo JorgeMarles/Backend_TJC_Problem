@@ -4,29 +4,21 @@ import { Problem } from "../database/entity/Problem";
 import { TopicRepository } from "../repositories/TopicRepository";
 import { Topic } from "../database/entity/Topic";
 
-/**
-    {
-    "name": "Watermelon",
-    "statement": "Cut the watermelon",
-    "difficulty": "easy",
-    "topicId": 4,
-    "example_input": "",
-    "example_output": "",
-    "url_input": "",
-    "url_output": "",
-    "url_solution": ""
-    }
- */
-
 export const createProblem = async (req: Request, res: Response) => {
     try {
-        const problem: Problem = req.body;
+        const keys = ProblemRepository.metadata.columns.map(column => column.propertyName);
+        let problem: any = {};
+        for (const key of keys) {
+            if (key in req.body) {
+                problem[key] = req.body[key];
+            }
+        }
         const topicId: number = req.body.topic_id;
         const topic: unknown = await TopicRepository.findOneBy({ id: topicId });
         if (topic instanceof Topic) {
             problem.disable = false;
             problem.topic = topic;
-            await ProblemRepository.insert(problem);
+            await ProblemRepository.save(problem);
             return res.status(201).send({ isCreated: true, message: "Problem created succesfully" });
         }
         else {
