@@ -7,6 +7,9 @@ COPY package*.json .
 
 COPY .env .
 
+#Temporal
+COPY public.key /app/public.key
+
 RUN npm install
 
 COPY . .
@@ -21,6 +24,9 @@ WORKDIR /app
 COPY package*.json .
 
 COPY .env .
+#Temporal
+COPY public.key /app/public.key
+
 
 RUN npm ci --only=production
 
