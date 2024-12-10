@@ -1,7 +1,7 @@
 import { Entity, OneToMany, PrimaryColumn } from "typeorm";
 import { Submission } from "./Submission";
 
-@Entity({ name: "users" })
+@Entity({ name: "user" })
 export class User {
     @PrimaryColumn()
     id: number;
