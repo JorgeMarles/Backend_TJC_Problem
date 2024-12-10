@@ -46,14 +46,14 @@ export const createProblem = async (req: Request, res: Response) => {
 
 export const eraseProblem = async (req: Request, res: Response) => {
     try {
-        const id: number = req.body;
+        const id: number = req.body.id;
         const problem: unknown = await ProblemRepository.findOneBy({ id: id });
         if (problem instanceof Problem) {
             ProblemRepository.update(id, { disable: true });
             // ProblemRepository.delete(id);
             return res.status(200).send({ isErased: true, message: "Problem erased succesfully" });
         }
-        else throw Error("The problem don't exists");
+        else throw Error("The problem doesn't exists");
     }
     catch (error: unknown) {
         console.log(error);
