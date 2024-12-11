@@ -9,10 +9,12 @@ interface SubmissionView {
     id: string;
     veredict: string;
     executionDate: Date;
+    userId: number;
     problemId: number;
     problemName: string;
-    code_base64: string | undefined;
+    code_string: string | undefined;
 };
+
 
 export const findSubmission = async (submission_id: string, res: Response) => {
     try {
@@ -20,7 +22,7 @@ export const findSubmission = async (submission_id: string, res: Response) => {
         if (!(submission instanceof Submission)) {
             return res.status(400).send({ message: "The submission doesn't exist" });
         }
-        
+
         const submissionsDir = path.join(`${ROOT_DIR}/submissions`, `user_${submission.user.id}`, `problem_${submission.problem.id}`);
         if (!fs.existsSync(submissionsDir)) {
             return res.status(400).json({ message: "The source code for the submission " + submission.id + " don't exist" });
@@ -30,9 +32,10 @@ export const findSubmission = async (submission_id: string, res: Response) => {
             id: submission.id,
             veredict: submission.veredict,
             executionDate: submission.time_judge,
+            userId: submission.user.id,
             problemId: submission.problem.id,
             problemName: submission.problem.name,
-            code_base64: sourceCode.toString('base64')
+            code_string: sourceCode.toString()
         };
         return res.status(200).json(submissionView);
     }
@@ -55,16 +58,17 @@ export const findAllSubmissions = async (user_id: number | undefined, problem_id
             },
             relations: ["problem", "user"]
         });
-        
+
         const submissionsView: SubmissionView[] = [];
         for (const submission of submissions) {
             const submissionView: SubmissionView = {
                 id: submission.id,
                 veredict: submission.veredict,
                 executionDate: submission.time_judge,
+                userId: submission.user.id,
                 problemId: submission.problem.id,
                 problemName: submission.problem.name,
-                code_base64: undefined
+                code_string: undefined
             };
             submissionsView.push(submissionView);
         }
