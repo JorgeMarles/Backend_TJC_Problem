@@ -216,17 +216,15 @@ interface ExecutionResult {
 
 export const run = async (user_id: number, problem_id: number, code: Express.Multer.File, is_public: boolean, res: Response) => {
     try {
-
         const problem: unknown = await ProblemRepository.findOne({ where: { id: problem_id, disable: false } });
         if (!(problem instanceof Problem)) {
             throw new Error("The problem doesn't exist");
         }
-        
         const user: unknown = await UserRepository.findOne({ where: { id: user_id } });
         if (!(user instanceof User)) {
             throw new Error("The user doesn't exist");
         }
-
+        
         const formData = new FormData();
         const codeBuffer = fs.readFileSync(code.path);
         const codeBlob = new Blob([codeBuffer], { type: code.mimetype });
@@ -234,15 +232,16 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
 
         formData.append("code", codeFile);
         formData.append("problem_id", problem_id.toString());
+        formData.append("timeout", "20000");
+        formData.append("memoryLimit", "256");
 
         const response = await axios.post(`${URL_RUNNER}/runner`, formData);
         if (response.status !== 200) {
             throw new Error(response.data.message);
         }
-        const results: ExecutionResult = response.data;
-
+        const results: ExecutionResult = response.data.result;
         const submission: Submission = {
-            id: undefined,
+            id: results.executionId,
             veredict: results.status,
             output: results.stdout !== "" ? results.stdout : results.stderr,
             time_judge: new Date(),
@@ -258,10 +257,9 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
         fs.mkdirSync(submissionsDir, { recursive: true });	
         fs.copyFileSync(code.path, path.join(submissionsDir, `${results.executionId}${path.extname(code.originalname)}`));
 
-        return res.status(200).json({ message: "Test cases processed successfully", problem_id });
+        return res.status(200).json({ message: "Test cases processed successfully", submission: submission });
     }
     catch (error: unknown) {
-        ProblemRepository.delete(problem_id);
         if (error instanceof Error) {
             return res.status(400).json({ message: "Error processing the test cases", error: error.message });
         }

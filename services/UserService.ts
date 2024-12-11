@@ -51,9 +51,9 @@ export const findUser = async (req: Request, res: Response) => {
         if (typeof id == "string") {
             const user: unknown = await UserRepository.findOneBy({ id: parseInt(id) }); 
             if (user instanceof User) {
-                return res.status(200).send({ user: user});
+                return res.status(200).send({ user: user });
             }
-            else throw Error("The user don't exists");
+            else throw Error("The user doesn't exists");
         }
         else throw Error("Invalid data");
     }

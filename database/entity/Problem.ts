@@ -28,6 +28,12 @@ export class Problem {
     @Column("varchar", { length: 100 })
     example_output: string;
 
+    // @Column()
+    // timeout: number;
+
+    // @Column()
+    // memorylimit: number;
+
     @Column("boolean")
     disable: boolean;
 
