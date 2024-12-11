@@ -83,3 +83,25 @@ export const findAllSubmissions = async (user_id: number | undefined, problem_id
         }
     }
 };
+
+export const findByTopics = async (user_id: number, res: Response) => {
+    try {
+        const submissions: Submission[] = await SubmissionRepository.find({
+            relations: ["problem", "problem.topic"],
+            where: {
+                user: { id: user_id },
+            }
+        });
+        console.log(submissions);
+
+        return res.status(200).json(submissions);
+    }
+    catch (error: unknown) {
+        if (error instanceof Error) {
+            return res.status(400).send({ message: error.message });
+        }
+        else {
+            return res.status(400).send({ message: "Something went wrong" });
+        }
+    }
+};
