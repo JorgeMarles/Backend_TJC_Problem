@@ -25,15 +25,24 @@ export const findOne = async (req: Request, res: Response) => {
 export const find = async (req: Request, res: Response) => {
     try {
         const user_id = req.query.user_id;
-        if (!user_id) {
-            res.status(400).json({ message: "The user_id is required" });
-            return;
-        }
-        if (typeof user_id !== "string") {
+        const problem_id = req.query.problem_id;
+        if (!user_id == undefined && typeof user_id !== "string") {
             res.status(400).json({ message: "The user_id must be a one value" });
             return;
         }
-        findAllSubmissions(parseInt(user_id), res);
+        if (!problem_id == undefined && typeof problem_id !== "string") {
+            res.status(400).json({ message: "The problem_id must be a one value" });
+            return;
+        }
+        let parse_user_id: undefined | number = undefined;
+        if (user_id !== undefined && typeof user_id === "string") {
+            parse_user_id = parseInt(user_id);
+        }
+        let parse_problem_id: undefined | number = undefined;
+        if (problem_id !== undefined && typeof problem_id === "string") {
+            parse_problem_id = parseInt(problem_id);
+        }
+        findAllSubmissions(parse_user_id, parse_problem_id, res);
     } 
     catch (error) {
         console.error(error);

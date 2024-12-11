@@ -46,11 +46,12 @@ export const findSubmission = async (submission_id: string, res: Response) => {
     }
 };
 
-export const findAllSubmissions = async (user_id: number, res: Response) => {
+export const findAllSubmissions = async (user_id: number | undefined, problem_id: number | undefined, res: Response) => {
     try {
         const submissions: Submission[] = await SubmissionRepository.find({
             where: {
                 user: { id: user_id },
+                problem: { id: problem_id }
             },
             relations: ["problem", "user"]
         });
