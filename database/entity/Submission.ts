@@ -5,7 +5,7 @@ import { User } from "./User";
 @Entity({ name: "submission" })
 export class Submission {
     @PrimaryColumn("varchar", { length: 256 })
-    id: string | undefined;
+    id: string;
 
     @Column("varchar", { length: 100 })
     veredict: string;
