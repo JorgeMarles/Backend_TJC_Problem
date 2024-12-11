@@ -1,11 +1,12 @@
 import express from "express";
-import { create, erase, find, update, uploadTest } from "../controllers/ProblemController";
+import { create, erase, find, runCode, update, uploadTest } from "../controllers/ProblemController";
 import { authenticate } from "../middleware/authenticateToken";
 import multer from "multer";
 import { testCasesUploader } from "../middleware/UploaderMiddleware";
 
 export const problemRouter = express.Router();
 
+problemRouter.post("/run", authenticate(['admin', 'user']), runCode);
 problemRouter.post("/uploadTests", authenticate(['admin']), testCasesUploader.fields([{ name: "inputs", maxCount: 1 }, { name: "outputs", maxCount: 1 }]), uploadTest);
 problemRouter.post("/", authenticate(['admin']), create);
 problemRouter.get("/", authenticate(['admin', 'user']), find);

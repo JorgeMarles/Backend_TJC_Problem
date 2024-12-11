@@ -7,6 +7,10 @@ import fs from "fs";
 import path from "path";
 import { ROOT_DIR, URL_RUNNER } from "../config";
 import axios from "axios";
+import { Submission } from "../database/entity/Submission";
+import { UserRepository } from "../repositories/UserRepository";
+import { User } from "../database/entity/User";
+import { SubmissionRepository } from "../repositories/SubmissionRepository";
 
 export const createProblem = async (req: Request, res: Response) => {
     try {
@@ -199,5 +203,73 @@ export const saveTestCases = async (problem_id: number, inputsFile: Express.Mult
     finally {
         fs.rmSync(inputsFile.path);
         fs.rmSync(outputsFile.path);
+    }
+}
+
+interface ExecutionResult {
+    stdout: string;
+    stderr: string;
+    status: string;
+    executionTime: number;
+    executionId: string;
+}
+
+export const run = async (user_id: number, problem_id: number, code: Express.Multer.File, res: Response) => {
+    try {
+
+        const problem: unknown = await ProblemRepository.findOne({ where: { id: problem_id, disable: false } });
+        if (!(problem instanceof Problem)) {
+            throw new Error("The problem doesn't exist");
+        }
+        
+        const user: unknown = await UserRepository.findOne({ where: { id: user_id } });
+        if (!(user instanceof User)) {
+            throw new Error("The user doesn't exist");
+        }
+
+        const formData = new FormData();
+        const codeBuffer = fs.readFileSync(code.path);
+        const codeBlob = new Blob([codeBuffer], { type: code.mimetype });
+        const codeFile = new File([codeBlob], code.originalname, { type: code.mimetype });
+
+        formData.append("code", codeFile);
+        formData.append("user_id", user_id.toString());
+        formData.append("problem_id", problem_id.toString());
+
+        const response = await axios.post(`${URL_RUNNER}/runner`, formData);
+        if (response.status !== 200) {
+            throw new Error(response.data.message);
+        }
+        const results: ExecutionResult = response.data;
+
+        const submission: Submission = {
+            id: undefined,
+            veredict: results.status,
+            output: results.stdout !== "" ? results.stdout : results.stderr,
+            time_judge: new Date(),
+            time_running: results.executionTime,
+            problem: problem,
+            user: user
+        };
+
+        await SubmissionRepository.save(submission);
+
+        const submissionsDir = path.join(`${ROOT_DIR}/submissions`, `user_${user_id}`, `problem_${problem_id}`);
+        fs.mkdirSync(submissionsDir, { recursive: true });	
+        fs.copyFileSync(code.path, path.join(submissionsDir, `${results.executionId}${path.extname(code.originalname)}`));
+
+        return res.status(200).json({ message: "Test cases processed successfully", problem_id });
+    }
+    catch (error: unknown) {
+        ProblemRepository.delete(problem_id);
+        if (error instanceof Error) {
+            return res.status(400).json({ message: "Error processing the test cases", error: error.message });
+        }
+        else {
+            return res.status(400).send({ isUploaded: false, message: "Something went wrong" });
+        }
+    }
+    finally {
+        fs.rmSync(code.path);
     }
 }

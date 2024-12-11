@@ -1,5 +1,32 @@
 import { Request, Response } from "express";
-import { createProblem, eraseProblem, findProblems, findProblem, updateProblem, saveTestCases} from "../services/ProblemServices";
+import { createProblem, eraseProblem, findProblems, findProblem, updateProblem, saveTestCases, run} from "../services/ProblemServices";
+
+export const runCode = async (req: Request, res: Response) => {
+    try {
+        const user_id = req.body.user_id;
+        if (!user_id) {
+            res.status(400).json({ message: "The user_id is required" });
+            return;
+        }
+        const problem_id = req.body.problem_id;
+        if (!problem_id) {
+            res.status(400).json({ message: "The problem_id is required" });
+            return;
+        }
+        const code = req.file;
+        if (!code) {
+            res.status(400).json({ message: "The code file is required" });
+            return;
+        }
+        run(user_id, problem_id, code, res);
+    } 
+    catch (error) {
+        console.error(error);
+        if (error instanceof Error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    }
+};
 
 export const uploadTest = async (req: Request, res: Response) => {
     try {
