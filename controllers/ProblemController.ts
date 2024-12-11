@@ -90,7 +90,7 @@ export const erase = async (req: Request, res: Response) => {
 
 export const find = async (req: Request, res: Response) => {
     try {
-        if(req.query["id"] !== undefined) {
+        if(req.query["id"] !== undefined || req.query["name"] !== undefined) {
             findProblem(req, res);
         }
         else {

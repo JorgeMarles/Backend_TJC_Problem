@@ -26,7 +26,7 @@ export const createProblem = async (req: Request, res: Response) => {
         if (topic instanceof Topic) {
             problem.disable = false;
             problem.topic = topic;
-            const result:Problem = await ProblemRepository.save(problem);
+            const result: Problem = await ProblemRepository.save(problem);
             return res.status(201).send({ isCreated: true, problem_id: result.id, message: "Problem created succesfully" });
         }
         else {
@@ -98,9 +98,20 @@ export const findProblems = async (req: Request, res: Response) => {
 export const findProblem = async (req: Request, res: Response) => {
     try {
         const id = "id" in req.query && typeof req.query["id"] === "string" ? req.query["id"] : undefined;
+        const name = "name" in req.query && typeof req.query["name"] === "string" ? req.query["name"] : undefined;
         if (id !== undefined) {
             const problem: unknown = await ProblemRepository.findOne({
                 where: { id: parseInt(id), disable: false },
+                relations: { topic: true }
+            });
+            if (problem instanceof Problem) {
+                return res.status(200).send({ problem: problem });
+            }
+            else throw Error("The problem doesn't exist.");
+        }
+        else if (name !== undefined) {
+            const problem: unknown = await ProblemRepository.findOne({
+                where: { name: name, disable: false },
                 relations: { topic: true }
             });
             if (problem instanceof Problem) {
@@ -152,7 +163,7 @@ export const updateProblem = async (req: Request, res: Response) => {
         removeUndefined(problem, problemUpdate);
         delete problemUpdate.topic_id;
         ProblemRepository.update(problem.id, problemUpdate);
-        return res.status(200).send({ isUpdate: true, user: problemUpdate, message: "Problem updated succesfully" }); 
+        return res.status(200).send({ isUpdate: true, user: problemUpdate, message: "Problem updated succesfully" });
     }
     catch (error: unknown) {
         console.log(error);
@@ -183,11 +194,11 @@ export const saveTestCases = async (problem_id: number, inputsFile: Express.Mult
         if (response.status !== 200) {
             throw new Error(response.data.message);
         }
-        
-        fs.mkdirSync(path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`), { recursive: true });	
+
+        fs.mkdirSync(path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`), { recursive: true });
         fs.copyFileSync(inputsFile.path, path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`, `inputs.zip`));
         fs.copyFileSync(outputsFile.path, path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`, `outputs.zip`));
-        
+
         return res.status(200).json({ message: "Test cases processed successfully", problem_id });
     }
     catch (error: unknown) {
@@ -224,7 +235,7 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
         if (!(user instanceof User)) {
             throw new Error("The user doesn't exist");
         }
-        
+
         const formData = new FormData();
         const codeBuffer = fs.readFileSync(code.path);
         const codeBlob = new Blob([codeBuffer], { type: code.mimetype });
@@ -254,7 +265,7 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
         await SubmissionRepository.save(submission);
 
         const submissionsDir = path.join(`${ROOT_DIR}/submissions`, `user_${user_id}`, `problem_${problem_id}`);
-        fs.mkdirSync(submissionsDir, { recursive: true });	
+        fs.mkdirSync(submissionsDir, { recursive: true });
         fs.copyFileSync(code.path, path.join(submissionsDir, `${results.executionId}${path.extname(code.originalname)}`));
 
         return res.status(200).json({ message: "Test cases processed successfully", submission_id: submission.id });
