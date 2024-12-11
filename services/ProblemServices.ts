@@ -257,7 +257,7 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
         fs.mkdirSync(submissionsDir, { recursive: true });	
         fs.copyFileSync(code.path, path.join(submissionsDir, `${results.executionId}${path.extname(code.originalname)}`));
 
-        return res.status(200).json({ message: "Test cases processed successfully", submission: submission });
+        return res.status(200).json({ message: "Test cases processed successfully", submission_id: submission.id });
     }
     catch (error: unknown) {
         if (error instanceof Error) {
