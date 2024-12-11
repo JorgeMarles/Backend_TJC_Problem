@@ -7,6 +7,7 @@ import cors from 'cors';
 import { topicRouter } from './routers/TopicRouter';
 import { problemRouter } from './routers/ProblemRouter';
 import { userRouter } from './routers/UserRouter';
+import { submissionRouter } from './routers/SubmissionRouter';
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 app.use("/topic", topicRouter);
 app.use("/problem", problemRouter);
 app.use("/user", userRouter);
+app.use("/submission", submissionRouter);
 
 const run = async () => {
     try {
