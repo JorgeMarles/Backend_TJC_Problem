@@ -4,6 +4,7 @@ import { createProblem, eraseProblem, findProblems, findProblem, updateProblem, 
 export const runCode = async (req: Request, res: Response) => {
     try {
         const user_id = req.body.user_id;
+        console.log(user_id);
         if (!user_id) {
             res.status(400).json({ message: "The user_id is required" });
             return;
@@ -18,7 +19,13 @@ export const runCode = async (req: Request, res: Response) => {
             res.status(400).json({ message: "The code file is required" });
             return;
         }
-        run(user_id, problem_id, code, res);
+        const is_public = req.body.is_public;
+        if (!is_public) {
+            res.status(400).json({ message: "The is_public is required" });
+            return;
+        }
+        
+        run(parseInt(user_id), parseInt(problem_id), code, (is_public === "true"), res);
     } 
     catch (error) {
         console.error(error);

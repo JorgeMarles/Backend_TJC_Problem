@@ -214,7 +214,7 @@ interface ExecutionResult {
     executionId: string;
 }
 
-export const run = async (user_id: number, problem_id: number, code: Express.Multer.File, res: Response) => {
+export const run = async (user_id: number, problem_id: number, code: Express.Multer.File, is_public: boolean, res: Response) => {
     try {
 
         const problem: unknown = await ProblemRepository.findOne({ where: { id: problem_id, disable: false } });
@@ -233,7 +233,6 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
         const codeFile = new File([codeBlob], code.originalname, { type: code.mimetype });
 
         formData.append("code", codeFile);
-        formData.append("user_id", user_id.toString());
         formData.append("problem_id", problem_id.toString());
 
         const response = await axios.post(`${URL_RUNNER}/runner`, formData);
@@ -249,7 +248,8 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
             time_judge: new Date(),
             time_running: results.executionTime,
             problem: problem,
-            user: user
+            user: user,
+            is_public: is_public
         };
 
         await SubmissionRepository.save(submission);

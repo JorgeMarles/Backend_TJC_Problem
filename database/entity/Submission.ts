@@ -19,6 +19,9 @@ export class Submission {
     @Column()
     time_running: number;
 
+    @Column("boolean")
+    is_public: boolean;
+
     @ManyToOne(() => Problem, (problem) => problem.submissions)
     problem: Problem
 
