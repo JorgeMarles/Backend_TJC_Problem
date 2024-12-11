@@ -190,14 +190,17 @@ export const saveTestCases = async (problem_id: number, inputsFile: Express.Mult
         formData.append("outputs", outputFile);
 
         formData.append("problem_id", problem_id.toString());
+        try {
         const response = await axios.post(`${URL_RUNNER}/testCases/uploadTests`, formData);
-        if (response.status !== 200) {
-            throw new Error(response.data.message);
+        }
+        catch(error: unknown) {
+            console.log(error);
+            throw error;
         }
 
-        fs.mkdirSync(path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`), { recursive: true });
-        fs.copyFileSync(inputsFile.path, path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`, `inputs.zip`));
-        fs.copyFileSync(outputsFile.path, path.join(`${ROOT_DIR}/testCases`, `problem_${problem_id}`, `outputs.zip`));
+        fs.mkdirSync(path.join(ROOT_DIR, "testCases", `problem_${problem_id}`), { recursive: true });
+        fs.copyFileSync(inputsFile.path, path.join(ROOT_DIR, "testCases", `problem_${problem_id}`, `inputs.zip`));
+        fs.copyFileSync(outputsFile.path, path.join(ROOT_DIR, "testCases", `problem_${problem_id}`, `outputs.zip`));
 
         return res.status(200).json({ message: "Test cases processed successfully", problem_id });
     }
@@ -264,7 +267,7 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
 
         await SubmissionRepository.save(submission);
 
-        const submissionsDir = path.join(`${ROOT_DIR}/submissions`, `user_${user_id}`, `problem_${problem_id}`);
+        const submissionsDir = path.join(ROOT_DIR, "submissions", `user_${user_id}`, `problem_${problem_id}`);
         fs.mkdirSync(submissionsDir, { recursive: true });
         fs.copyFileSync(code.path, path.join(submissionsDir, `${results.executionId}${path.extname(code.originalname)}`));
 

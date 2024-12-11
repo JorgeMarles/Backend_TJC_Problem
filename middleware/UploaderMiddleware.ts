@@ -4,12 +4,12 @@ import { ROOT_DIR } from '../config';
 import { v4 as uuidv4 } from "uuid";
 import path from 'path';
 
-if (!fs.existsSync(ROOT_DIR + "/uploads")) {
-    fs.mkdirSync(ROOT_DIR + "/uploads");
+if (!fs.existsSync(path.join(ROOT_DIR, "uploads"))) {
+    fs.mkdirSync(path.join(ROOT_DIR, "uploads"));
 }
 
-if (!fs.existsSync(ROOT_DIR + "/tmp")) {
-    fs.mkdirSync(ROOT_DIR + "/tmp");
+if (!fs.existsSync(path.join(ROOT_DIR, "tmp"))) {
+    fs.mkdirSync(path.join(ROOT_DIR, "tmp"));
 }
 
 const validExtensions = [".cpp", ".java", ".py"];
@@ -32,7 +32,7 @@ const fileLanguageFilter = (req: any, file: any, cb: any) => {
 
 const storageTestCases = multer.diskStorage({
     destination: function(req, file, cb) {
-        cb(null, ROOT_DIR + "/uploads");
+        cb(null, path.join(ROOT_DIR, "uploads"));
     },
     filename: function(req, file, cb) {
         cb(null, "upload_" + uuidv4() + path.extname(file.originalname));
@@ -41,7 +41,7 @@ const storageTestCases = multer.diskStorage({
 
 const storageCode = multer.diskStorage({
     destination: function(req, file, cb) {
-        cb(null, ROOT_DIR + "/tmp");
+        cb(null, path.join(ROOT_DIR, "tmp"));
     },
     filename: function(req, file, cb) {
         cb(null, uuidv4() + path.extname(file.originalname));

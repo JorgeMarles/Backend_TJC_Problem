@@ -17,11 +17,6 @@ app.use(cors({
 
 app.use(bodyParser.json());
 
-app.use((req, res, next) => {
-    console.log("Middleware");
-    next();
-});
-
 app.use("/topic", topicRouter);
 app.use("/problem", problemRouter);
 app.use("/user", userRouter);
