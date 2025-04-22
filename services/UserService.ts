@@ -44,7 +44,7 @@ export const createUser = async (req: Request, res: Response) => {
 //     }
 // };
 
-
+/*
 export const findUser = async (req: Request, res: Response) => {
     try {        
         const id: unknown  = req.query.id;
@@ -83,3 +83,4 @@ export const findUsers = async (req: Request, res: Response) => {
         }
     }
 };
+*/
