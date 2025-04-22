@@ -11,6 +11,7 @@ import { Submission } from "../database/entity/Submission";
 import { UserRepository } from "../repositories/UserRepository";
 import { User } from "../database/entity/User";
 import { SubmissionRepository } from "../repositories/SubmissionRepository";
+import { apiContests } from "../middleware/interceptor";
 
 export const createProblem = async (req: Request, res: Response) => {
     try {
@@ -27,6 +28,17 @@ export const createProblem = async (req: Request, res: Response) => {
             problem.disable = false;
             problem.topic = topic;
             const result: Problem = await ProblemRepository.save(problem);
+
+            if(result instanceof Problem){
+                const response = await apiContests.post("/problem", {
+                    id: result.id
+                });
+                if(response.status !== 201){
+                    ProblemRepository.delete(result.id);
+                    return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
+                }
+            }
+
             return res.status(201).send({ isCreated: true, problem_id: result.id, message: "Problem created succesfully" });
         }
         else {
@@ -114,9 +126,16 @@ export const findProblem = async (req: Request, res: Response) => {
                 where: { name: name, disable: false },
                 relations: { topic: true }
             });
+            console.log(problem);
+            
             if (problem instanceof Problem) {
                 return res.status(200).send({ problem: problem });
             }
+            /**
+            const problem: Problem[] = await ProblemRepository.findBySearch(name);
+            if (problem.length === 0) throw Error("The problem doesn't exist.");
+            return res.status(200).send(problem);
+             */
             else throw Error("The problem doesn't exist.");
         }
         else throw Error("Invalid data");
@@ -267,13 +286,21 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
 
         await SubmissionRepository.save(submission);
 
+        
+
         const submissionsDir = path.join(ROOT_DIR, "submissions", `user_${user_id}`, `problem_${problem_id}`);
         fs.mkdirSync(submissionsDir, { recursive: true });
         fs.copyFileSync(code.path, path.join(submissionsDir, `${results.executionId}${path.extname(code.originalname)}`));
 
+        await apiContests.post("/contest/submission", {
+            id: submission.id
+        })
+
         return res.status(200).json({ message: "Test cases processed successfully", submission_id: submission.id });
     }
     catch (error: unknown) {
+        console.error(error);
+        
         if (error instanceof Error) {
             return res.status(400).json({ message: "Error processing the test cases", error: error.message });
         }
