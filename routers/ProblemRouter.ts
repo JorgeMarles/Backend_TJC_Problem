@@ -9,7 +9,7 @@ export const problemRouter = express.Router();
 problemRouter.post("/run", authenticate(['admin', 'user']), codeUploader.single('code'), runCode);
 problemRouter.post("/uploadTests", authenticate(['admin']), testCasesUploader.fields([{ name: "inputs", maxCount: 1 }, { name: "outputs", maxCount: 1 }]), uploadTest);
 problemRouter.post("/", authenticate(['admin']), create);
-problemRouter.get("/", authenticate(['admin', 'user']), find);
+problemRouter.get("/", authenticate(['admin', 'user', 'service']), find);
 problemRouter.delete("/", authenticate(['admin']), erase);
 problemRouter.put("/", authenticate(['admin']), update);
 
