@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createUser, findUser, findUsers } from "../services/UserService";
+import { createUser } from "../services/UserService";
 
 export const create = async (req: Request, res: Response) => {
     try {
@@ -33,7 +33,7 @@ export const create = async (req: Request, res: Response) => {
 //         }
 //     }
 // };
-
+/*
 export const find = async (req: Request, res: Response) => {
     try {
         if (req.query["id"] != undefined) {
@@ -48,3 +48,4 @@ export const find = async (req: Request, res: Response) => {
         }
     }
 };
+*/
