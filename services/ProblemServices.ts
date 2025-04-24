@@ -28,18 +28,20 @@ export const createProblem = async (req: Request, res: Response) => {
             problem.disable = false;
             problem.topic = topic;
             const result: Problem = await ProblemRepository.save(problem);
-
-            if(result instanceof Problem){
+            
+            if(result.id){
                 const response = await apiContests.post("/problem", {
                     id: result.id
                 });
+                
                 if(response.status !== 201){
                     ProblemRepository.delete(result.id);
                     return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
                 }
+                return res.status(201).send({ isCreated: true, problem_id: result.id, message: "Problem created succesfully" });
+            }else{
+                return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
             }
-
-            return res.status(201).send({ isCreated: true, problem_id: result.id, message: "Problem created succesfully" });
         }
         else {
             return res.status(400).send({ isCreated: false, message: "The topic don't exist" });
@@ -125,9 +127,7 @@ export const findProblem = async (req: Request, res: Response) => {
             const problem: unknown = await ProblemRepository.findOne({
                 where: { name: name, disable: false },
                 relations: { topic: true }
-            });
-            console.log(problem);
-            
+            });            
             if (problem instanceof Problem) {
                 return res.status(200).send({ problem: problem });
             }
