@@ -124,19 +124,16 @@ export const findProblem = async (req: Request, res: Response) => {
             else throw Error("The problem doesn't exist.");
         }
         else if (name !== undefined) {
-            const problem: unknown = await ProblemRepository.findOne({
-                where: { name: name, disable: false },
-                relations: { topic: true }
-            });            
+            const problem: unknown = await ProblemRepository.findBySearch(name);
             if (problem instanceof Problem) {
                 return res.status(200).send({ problem: problem });
             }
+            return res.status(404).send(null);
             /**
             const problem: Problem[] = await ProblemRepository.findBySearch(name);
             if (problem.length === 0) throw Error("The problem doesn't exist.");
             return res.status(200).send(problem);
              */
-            else throw Error("The problem doesn't exist.");
         }
         else throw Error("Invalid data");
     }
