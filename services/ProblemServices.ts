@@ -29,19 +29,19 @@ export const createProblem = async (req: Request, res: Response) => {
             problem.disable = false;
             problem.topic = topic;
             const result: Problem = await ProblemRepository.save(problem);
-            
-            if(result.id){
+
+            if (result.id) {
                 const response = await apiContests.post("/problem", {
                     id: result.id
                 });
-                
-                if(response.status !== 201){
+
+                if (response.status !== 201) {
                     ProblemRepository.delete(result.id);
                     return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
                 }
                 sendProblemMessage(result.id, result.name, topicId, result.difficulty);
                 return res.status(201).send({ isCreated: true, problem_id: result.id, message: "Problem created succesfully" });
-            }else{
+            } else {
                 return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
             }
         }
@@ -207,9 +207,9 @@ export const saveTestCases = async (problem_id: number, inputsFile: Express.Mult
 
         formData.append("problem_id", problem_id.toString());
         try {
-        const response = await axios.post(`${URL_RUNNER}/testCases/uploadTests`, formData);
+            const response = await axios.post(`${URL_RUNNER}/testCases/uploadTests`, formData);
         }
-        catch(error: unknown) {
+        catch (error: unknown) {
             console.log(error);
             throw error;
         }
@@ -264,6 +264,7 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
         formData.append("problem_id", problem_id.toString());
         formData.append("timeout", "20000");
         formData.append("memoryLimit", "256");
+        formData.append("user_id", user_id.toString());
 
         const response = await axios.post(`${URL_RUNNER}/runner`, formData);
         if (response.status !== 200) {
@@ -283,7 +284,7 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
 
         await SubmissionRepository.save(submission);
 
-        
+
 
         const submissionsDir = path.join(ROOT_DIR, "submissions", `user_${user_id}`, `problem_${problem_id}`);
         fs.mkdirSync(submissionsDir, { recursive: true });
@@ -297,7 +298,7 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
     }
     catch (error: unknown) {
         console.error(error);
-        
+
         if (error instanceof Error) {
             return res.status(400).json({ message: "Error processing the test cases", error: error.message });
         }
