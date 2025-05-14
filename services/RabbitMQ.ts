@@ -32,6 +32,9 @@ type RabbitMQUtils = {
 
 const rmq: RabbitMQUtils = {
     queuesOut: {
+        'problem-stats': {
+            queue: null
+        },
         'contest-stats': {
             queue: null,
         },
