@@ -12,6 +12,7 @@ import { UserRepository } from "../repositories/UserRepository";
 import { User } from "../database/entity/User";
 import { SubmissionRepository } from "../repositories/SubmissionRepository";
 import { apiContests } from "../middleware/interceptor";
+import { sendProblemMessage } from "./RabbitMQ";
 
 export const createProblem = async (req: Request, res: Response) => {
     try {
@@ -38,6 +39,7 @@ export const createProblem = async (req: Request, res: Response) => {
                     ProblemRepository.delete(result.id);
                     return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
                 }
+                sendProblemMessage(result.id, result.name, topicId, result.difficulty);
                 return res.status(201).send({ isCreated: true, problem_id: result.id, message: "Problem created succesfully" });
             }else{
                 return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
@@ -176,6 +178,7 @@ export const updateProblem = async (req: Request, res: Response) => {
         removeUndefined(problem, problemUpdate);
         delete problemUpdate.topic_id;
         ProblemRepository.update(problem.id, problemUpdate);
+        sendProblemMessage(problem.id, problemUpdate.name, topicId, problemUpdate.difficulty);
         return res.status(200).send({ isUpdate: true, user: problemUpdate, message: "Problem updated succesfully" });
     }
     catch (error: unknown) {

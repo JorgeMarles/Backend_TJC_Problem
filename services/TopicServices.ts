@@ -1,11 +1,17 @@
 import { Request, Response } from "express"
 import { Topic } from "../database/entity/Topic";
 import { TopicRepository } from "../repositories/TopicRepository";
+import { InsertResult } from "typeorm";
+import { sendTopicMessage } from "./RabbitMQ";
 
 export const createTopic = async (req: Request, res: Response) => {
     try {        
         const topic : Topic = req.body;
-        await TopicRepository.insert(topic);
+        const insertResult: InsertResult = await TopicRepository.insert(topic);
+        insertResult.identifiers.forEach((identifier) => {
+            topic.id = identifier.id;
+        })
+        sendTopicMessage(topic.id, topic.name);
         return res.status(201).send({ isCreated: true, message: "Topic created succesfully" });
     }
     catch (error: unknown) {

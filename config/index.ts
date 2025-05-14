@@ -13,3 +13,7 @@ export const URL_RUNNER = process.env.URL_RUNNER || "";
 export const URL_BACKEND_CONTESTS = process.env.URL_BACKEND_CONTESTS || "http://localhost:8080";
 export const URL_PUBLIC_KEY = process.env.URL_PUBLIC_KEY || "";
 export const URL_PRIVATE_KEY = process.env.URL_PRIVATE_KEY || "";
+export const RABBITMQ_USERNAME = process.env.RABBITMQ_USERNAME || "";
+export const RABBITMQ_PASSWORD = process.env.RABBITMQ_PASSWORD || "";
+export const RABBITMQ_HOST = process.env.RABBITMQ_HOST || "";
+export const RABBITMQ_PORT = process.env.RABBITMQ_PORT || "";
