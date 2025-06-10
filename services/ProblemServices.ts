@@ -12,7 +12,7 @@ import { UserRepository } from "../repositories/UserRepository";
 import { User } from "../database/entity/User";
 import { SubmissionRepository } from "../repositories/SubmissionRepository";
 import { apiContests } from "../middleware/interceptor";
-import { sendProblemMessage } from "./RabbitMQ";
+import { sendProblemCreationMessage, sendProblemMessage } from "./RabbitMQ";
 
 export const createProblem = async (req: Request, res: Response) => {
     try {
@@ -31,15 +31,8 @@ export const createProblem = async (req: Request, res: Response) => {
             const result: Problem = await ProblemRepository.save(problem);
 
             if (result.id) {
-                const response = await apiContests.post("/problem", {
-                    id: result.id
-                });
-
-                if (response.status !== 201) {
-                    ProblemRepository.delete(result.id);
-                    return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
-                }
                 sendProblemMessage(result.id, result.name, topicId, result.difficulty);
+                sendProblemCreationMessage(result.id);
                 return res.status(201).send({ isCreated: true, problem_id: result.id, message: "Problem created succesfully" });
             } else {
                 return res.status(400).send({ isCreated: false, message: "Error creating problem in backend" });
@@ -266,17 +259,20 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
         formData.append("memoryLimit", "256");
         formData.append("user_id", user_id.toString());
 
-        const response = await axios.post(`${URL_RUNNER}/runner`, formData);
-        if (response.status !== 200) {
-            throw new Error(response.data.message);
+        const result = await axios.post(`${URL_RUNNER}/runner`, formData);
+
+        if(result.status !== 200){
+            throw new Error("Error: "+JSON.stringify(result.data));
         }
-        const results: ExecutionResult = response.data.result;
+       
+        const id = result.data.result.id;
+
         const submission: Submission = {
-            id: results.executionId,
-            veredict: results.status,
-            output: results.stdout !== "" ? results.stdout : results.stderr,
+            id: id,
+            veredict: "Judging",
+            output: "",
             time_judge: new Date(),
-            time_running: results.executionTime,
+            time_running: 0,
             problem: problem,
             user: user,
             is_public: is_public
@@ -284,15 +280,9 @@ export const run = async (user_id: number, problem_id: number, code: Express.Mul
 
         await SubmissionRepository.save(submission);
 
-
-
         const submissionsDir = path.join(ROOT_DIR, "submissions", `user_${user_id}`, `problem_${problem_id}`);
         fs.mkdirSync(submissionsDir, { recursive: true });
-        fs.copyFileSync(code.path, path.join(submissionsDir, `${results.executionId}${path.extname(code.originalname)}`));
-
-        await apiContests.post("/contest/submission", {
-            id: submission.id
-        })
+        fs.copyFileSync(code.path, path.join(submissionsDir, `${id}${path.extname(code.originalname)}`));
 
         return res.status(200).json({ message: "Test cases processed successfully", submission_id: submission.id });
     }

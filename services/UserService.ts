@@ -3,13 +3,22 @@ import { User } from "../database/entity/User";
 import { UserRepository } from "../repositories/UserRepository";
 // import bcrypt from "bcrypt";
 
+export const createUserBase = async (id: number) => {
+    try {
+        const object = {id};
+        const user: User = object as User;
+        await UserRepository.save(user);
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const createUser = async (req: Request, res: Response) => {
-    try {        
-        if(!req.body.id) {
+    try {
+        if (!req.body.id) {
             throw Error("Id of the user is required.");
         }
-        const user: User = req.body;
-        await UserRepository.save(user);
+        await createUserBase(req.body.id!);
         return res.status(201).send({ isCreated: true, message: "User created succesfully" });
     }
     catch (error: unknown) {
@@ -18,13 +27,13 @@ export const createUser = async (req: Request, res: Response) => {
             return res.status(400).send({ isCreated: false, message: error.message });
         }
         else {
-            return res.status(400).send({ isCreated: false, message: "Something went wrong"});
+            return res.status(400).send({ isCreated: false, message: "Something went wrong" });
         }
     }
 };
 
 // export const disableUser = async (req: Request, res: Response) => {
-//     try {        
+//     try {
 //         const email: string = req.body["email"];
 //         const user: unknown = await UserRepository.findOneBy({ email: email });
 //         if (user instanceof User) {

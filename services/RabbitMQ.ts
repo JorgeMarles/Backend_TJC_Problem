@@ -1,5 +1,7 @@
 import ampq from 'amqplib';
 import { RABBITMQ_HOST, RABBITMQ_PASSWORD, RABBITMQ_PORT, RABBITMQ_USERNAME } from '../config';
+import { createOrUpdateSubmission, SubmissionUpdateInfo } from './SubmissionServices';
+import { createUserBase } from './UserService';
 
 type QueueInfo = {
     type: string,
@@ -30,25 +32,60 @@ type RabbitMQUtils = {
     channel: ampq.Channel | null
 }
 
+const DEFAULT_ALL_UP_TO = false;
+const DEFAULT_REQUEUE = false;
+
 const rmq: RabbitMQUtils = {
     queuesOut: {
-        'contest-stats': {
-            queue: null,
+        'problem-stats': {
+            queue: null
         },
-        'contest-end': {
-            info: {
-                type: 'x-delayed-message',
-                exchange: 'contest-delayed',
-                arguments: {
-                    'x-delayed-type': 'direct'
-                }
-            },
+        'problem-creation': {
+            queue: null
+        },
+        'submission-save': {
+            queue: null
+        }
+    },
+    queuesIn: {
+        'submission-update': {
             queue: null,
+            consume: async (channel, msg) => {
+                if (!msg) return;
+                try {
+                    const data: SubmissionUpdateInfo = JSON.parse(msg.content.toString()) as SubmissionUpdateInfo;
+                    console.log(`Saving info of submission ${data.id}`);
+                    await createOrUpdateSubmission(data);
+                    channel.ack(msg);
+                } catch (error) {
+                    console.error('Error saving info of submission:', error)
+                    channel.nack(msg, DEFAULT_ALL_UP_TO, DEFAULT_REQUEUE)
+                }
+            }
+        },
+        'user-creation': {
+            queue: null,
+            consume: async (channel, msg) => {
+                if (!msg) return;
+                try {
+                    const {
+                        userId
+                    }: {
+                        userId: number
+                    } = JSON.parse(msg.content.toString());
+
+                    console.log(`Creating user with id ${userId}`);
+                    await createUserBase(userId);
+                    channel.ack(msg);
+                } catch (error) {
+                    console.error('Error creating user:', error)
+                    channel.nack(msg, DEFAULT_ALL_UP_TO, DEFAULT_REQUEUE)
+                }
+            }
         }
     },
     channel: null
 }
-
 export const connectRabbitMQ = async () => {
     try {
         console.log('Connecting to RabbitMQ at', getRabbitMQURL(), '...');
@@ -56,21 +93,54 @@ export const connectRabbitMQ = async () => {
         const connection = await ampq.connect(getRabbitMQURL());
         const channel = await connection.createChannel();
 
+        // Configurar colas de salida
         for (const key in rmq.queuesOut) {
             const queue = key;
-            rmq.queuesOut[key].queue = await channel.assertQueue(queue, { durable: true });
+            
             if (rmq.queuesOut[key].info) {
                 const { type, exchange } = rmq.queuesOut[key].info;
-                await channel.assertExchange(exchange, type, { durable: true, arguments: rmq.queuesOut[key].info.arguments });
-                await channel.bindQueue(queue, exchange, key);
+                await channel.assertExchange(exchange, type, { 
+                    durable: true, 
+                    arguments: rmq.queuesOut[key].info.arguments 
+                });
+                
+                // Para fanout, no necesitamos crear la cola aquí
+                if (type !== 'fanout') {
+                    rmq.queuesOut[key].queue = await channel.assertQueue(queue, { durable: true });
+                    await channel.bindQueue(queue, exchange, key);
+                }
+            } else {
+                rmq.queuesOut[key].queue = await channel.assertQueue(queue, { durable: true });
             }
+            
             console.log(`Queue ${queue} is ready`);
         }
 
+        // Configurar colas de entrada
         for (const key in rmq.queuesIn) {
-            const queue = key;
-            rmq.queuesIn[key].queue = await channel.assertQueue(queue, { durable: true });
-            channel.consume(queue, async (msg) => rmq.queuesIn![key].consume(channel, msg), { noAck: false });
+            let queueName = key;
+            
+            // Para user-creation, crear una cola específica para este microservicio
+            if (key === 'user-creation') {
+                // Declarar el exchange fanout
+                await channel.assertExchange('user-broadcast', 'fanout', { durable: true });
+                
+                // Crear cola específica para el microservicio de contests
+                queueName = 'user-creation-problems';
+                const queue = await channel.assertQueue(queueName, { 
+                    durable: true,
+                    exclusive: false 
+                });
+                
+                // Vincular la cola al exchange
+                await channel.bindQueue(queue.queue, 'user-broadcast', '');
+                rmq.queuesIn[key].queue = queue;
+            } else {
+                rmq.queuesIn[key].queue = await channel.assertQueue(queueName, { durable: true });
+            }
+            
+            channel.consume(queueName, async (msg) => rmq.queuesIn![key].consume(channel, msg), { noAck: false });
+            console.log(`Consumer for ${queueName} is ready`);
         }
 
         rmq.channel = channel;
@@ -81,30 +151,35 @@ export const connectRabbitMQ = async () => {
     }
 }
 
-
-type TopicData = {
-    topicId: number;
-    topicName: string;
+type ProblemCreationMessage = {
+    problemId: number
 }
 
-type ProblemData = {
-    problemId: number;
-    problemName: string;
-    topicId: number;
-    difficulty: string;
+type SubmissionSaveMessage = {
+    submissionId: string
 }
 
 type TopicMessage = {
     type: "topic";
-    data: TopicData;
+    data: {
+        topicId: number;
+        topicName: string;
+    };
 }
 
 type ProblemMessage = {
     type: "problem";
-    data: ProblemData;
+    data: {
+        problemId: number;
+        problemName: string;
+        topicId: number;
+        difficulty: string;
+    };
 }
 
-type Message = TopicMessage | ProblemMessage;
+
+
+type Message = TopicMessage | ProblemMessage | ProblemCreationMessage | SubmissionSaveMessage;
 
 export const sendProblemMessage = async (problemId: number, problemName: string, topicId: number, difficulty: string) => {
     const message: Message = {
@@ -130,6 +205,24 @@ export const sendTopicMessage = async (topicId: number, topicName: string) => {
     }
     await publishMessage('problem-stats', JSON.stringify(message));
     console.log(`Topic message for topic ${topicId} sent`);
+}
+
+export const sendProblemCreationMessage = async (problemId: number) => {
+    const message: ProblemCreationMessage = {
+        problemId
+    }
+
+    await publishMessage('problem-creation', JSON.stringify(message))
+    console.log(`Problem creation message for id ${problemId} sent`)
+}
+
+export const sendSubmissionSaveMessage = async (submissionId: string) => {
+    const message: SubmissionSaveMessage = {
+        submissionId
+    }
+
+    await publishMessage('submission-save', JSON.stringify(message))
+    console.log(`Submission save message for id ${submissionId} sent`)
 }
 
 const publishMessage = async (queue: string, message: string, options?: ampq.Options.Publish) => {

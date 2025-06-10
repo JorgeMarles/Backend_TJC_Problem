@@ -4,6 +4,7 @@ import { SubmissionRepository } from "../repositories/SubmissionRepository";
 import { Response } from "express";
 import { ROOT_DIR } from "../config";
 import fs from "fs";
+import { sendSubmissionSaveMessage } from "./RabbitMQ";
 
 interface SubmissionView {
     id: string;
@@ -15,6 +16,29 @@ interface SubmissionView {
     code_string: string | undefined;
 };
 
+export type SubmissionUpdateInfo = {
+    id: string;
+    type_update?: "save" | "end" | "error"
+    veredict: string;
+    output: string;
+    time_running: number;
+}
+
+export const createOrUpdateSubmission = async (data: SubmissionUpdateInfo) => {
+    try {
+        const submission: Submission = new Submission();
+
+        if(data.type_update === "end"){
+            sendSubmissionSaveMessage(data.id);
+        }
+
+        delete data.type_update;
+        Object.assign(submission, data);
+        await SubmissionRepository.save(submission);
+    } catch (error) {
+        throw error;
+    }
+}
 
 export const findSubmission = async (submission_id: string, res: Response) => {
     try {
