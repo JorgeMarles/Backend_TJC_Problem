@@ -1,6 +1,6 @@
 import express from 'express';
 import "reflect-metadata";
-import { PORT, URL_FRONTEND} from './config';
+import { PORT, URL_FRONTEND } from './config';
 import { AppDataSource } from './database';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -9,6 +9,7 @@ import { problemRouter } from './routers/ProblemRouter';
 import { userRouter } from './routers/UserRouter';
 import { submissionRouter } from './routers/SubmissionRouter';
 import { connectRabbitMQ } from './services/RabbitMQ';
+import { registerService } from "./services/Consul";
 
 const app = express();
 
@@ -41,7 +42,13 @@ const run = async () => {
         }
         else console.error("Error connecting to RabbitMQ");
     }
-    app.listen(PORT, () => console.log(`Listening in port ${PORT}`));
+    app.get("/health", (req: express.Request, res: express.Response) => {
+        res.status(200).send("OK");
+    });
+    app.listen(PORT, async() => {
+        console.log(`Listening in port ${PORT}`);
+        await registerService();
+    })
 };
 
 run();
