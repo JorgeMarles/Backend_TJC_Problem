@@ -9,6 +9,7 @@ import { problemRouter } from './routers/ProblemRouter';
 import { userRouter } from './routers/UserRouter';
 import { submissionRouter } from './routers/SubmissionRouter';
 import { connectRabbitMQ } from './services/RabbitMQ';
+import { registerService } from "./services/Consul";
 
 const app = express();
 
